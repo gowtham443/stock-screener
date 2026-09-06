@@ -1,0 +1,6 @@
+{
+  "name": "Screener Stock Analyzer",
+  "description": "Automated Indian stock analysis tool for Screener.in exports with Google and NSE/BSE market intelligence to deliver clear buy/hold/sell decisions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
