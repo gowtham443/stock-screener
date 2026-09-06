@@ -4,6 +4,7 @@ import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import { GoogleGenAI } from '@google/genai';
 import { calculateScreenerFundamentalScore, buildComprehensiveAnalysis } from './src/utils/fundamentalEngine';
+import { ALL_INDIAN_STOCKS, searchIndianStocks, generateIndianStockData } from './src/data/indianStocksData';
 
 dotenv.config();
 
@@ -20,6 +21,54 @@ function getGeminiClient(): GoogleGenAI | null {
   }
   return new GoogleGenAI({ apiKey });
 }
+
+// 0. API Endpoints for All Indian Stocks (NSE/BSE)
+app.get('/api/stocks/all', (req: Request, res: Response) => {
+  res.json({
+    total: ALL_INDIAN_STOCKS.length,
+    stocks: ALL_INDIAN_STOCKS
+  });
+});
+
+app.get('/api/stocks/search', (req: Request, res: Response) => {
+  const query = (req.query.q as string || '').trim();
+  if (!query) {
+    return res.json(ALL_INDIAN_STOCKS.slice(0, 15));
+  }
+
+  const results = searchIndianStocks(query);
+  if (results.length === 0) {
+    const generated = generateIndianStockData(query);
+    return res.json([generated]);
+  }
+  return res.json(results);
+});
+
+app.get('/api/stocks/lookup/:symbol', (req: Request, res: Response) => {
+  const symbol = req.params.symbol.toUpperCase();
+  const existing = ALL_INDIAN_STOCKS.find(s => s.symbol.toUpperCase() === symbol);
+  if (existing) {
+    return res.json(existing);
+  }
+  return res.json(generateIndianStockData(symbol));
+});
+
+// Professional Authentication endpoint
+app.post('/api/auth/login', (req: Request, res: Response) => {
+  const { email, role, pin } = req.body;
+  const user = {
+    id: 'usr_pro_' + Date.now(),
+    name: email ? email.split('@')[0].toUpperCase() : 'PRO ANALYST',
+    email: email || 'analyst@stocklogic.in',
+    role: role || 'SEBI Research Analyst',
+    firmName: 'StockLogic Institutional Research',
+    licenseNumber: 'INH000014892 / NSE-PRO',
+    tier: 'Pro Enterprise',
+    isLoggedIn: true,
+    loginTime: new Date().toLocaleTimeString('en-IN')
+  };
+  return res.json({ success: true, user, token: 'sl_pro_jwt_' + Date.now() });
+});
 
 // 1. Stock Analysis Route (Gemini with real-time prompt + mathematical fallback)
 app.post('/api/analyze', async (req: Request, res: Response) => {

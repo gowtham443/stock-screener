@@ -135,3 +135,17 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
 }
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email: string;
+  role: 'SEBI Research Analyst' | 'Institutional Trader' | 'Pro Portfolio Manager' | 'Retail Pro Investor';
+  firmName?: string;
+  licenseNumber?: string;
+  tier: 'Pro Enterprise' | 'Institutional' | 'Standard Pro';
+  avatar?: string;
+  isLoggedIn: boolean;
+  loginTime?: string;
+}
+

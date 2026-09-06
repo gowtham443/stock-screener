@@ -19,7 +19,7 @@ interface SidebarProps {
   onOpenChat: () => void;
   onOpenHelp: () => void;
   stocksCount: number;
-  portfolioCount: number;
+  portfolioCount?: number;
   language: Language;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
@@ -32,7 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenChat,
   onOpenHelp,
   stocksCount,
-  portfolioCount,
+  portfolioCount = 0,
   language,
   isMobileOpen = false,
   onCloseMobile

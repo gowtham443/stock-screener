@@ -21,20 +21,25 @@ import { calculateScreenerFundamentalScore } from '../utils/fundamentalEngine';
 import { getTranslation } from '../utils/translations';
 
 interface PersonalPortfolioProps {
-  portfolio: PortfolioItem[];
-  onUpdatePortfolio: (items: PortfolioItem[]) => void;
-  availableStocks: StockData[];
-  onSelectStockToScan: (stock: StockData) => void;
+  portfolio?: PortfolioItem[];
+  onUpdatePortfolio?: (items: PortfolioItem[]) => void;
+  availableStocks?: StockData[];
+  onSelectStockToScan?: (stock: StockData) => void;
+  onSelectStock?: (stock: StockData) => void;
   language: Language;
 }
 
 export const PersonalPortfolio: React.FC<PersonalPortfolioProps> = ({
-  portfolio,
+  portfolio = [],
   onUpdatePortfolio,
-  availableStocks,
+  availableStocks = [],
   onSelectStockToScan,
+  onSelectStock,
   language
 }) => {
+  const handleStockSelect = onSelectStockToScan || onSelectStock || (() => {});
+  const safePortfolio = Array.isArray(portfolio) ? portfolio : [];
+  const safeStocks = Array.isArray(availableStocks) ? availableStocks : [];
   const t = getTranslation(language);
   const isTamil = language === 'tamil';
 
@@ -52,7 +57,7 @@ export const PersonalPortfolio: React.FC<PersonalPortfolioProps> = ({
 
   // Map stock data for quick lookup
   const stockMap = new Map<string, StockData>();
-  availableStocks.forEach(s => {
+  safeStocks.forEach(s => {
     stockMap.set(s.symbol.toUpperCase(), s);
   });
 
@@ -61,7 +66,7 @@ export const PersonalPortfolio: React.FC<PersonalPortfolioProps> = ({
   let totalCurrentValue = 0;
   let weightedScoreSum = 0;
 
-  const enrichedHoldings = portfolio.map(item => {
+  const enrichedHoldings = safePortfolio.map(item => {
     const stock = stockMap.get(item.symbol.toUpperCase());
     const cmp = stock ? stock.ratios.cmp : item.buyPrice;
     const invested = item.quantity * item.buyPrice;
@@ -120,7 +125,9 @@ export const PersonalPortfolio: React.FC<PersonalPortfolioProps> = ({
       notes: newNotes
     };
 
-    onUpdatePortfolio([newItem, ...portfolio]);
+    if (onUpdatePortfolio) {
+      onUpdatePortfolio([newItem, ...safePortfolio]);
+    }
     setNewSymbol('');
     setNewQty('');
     setNewPrice('');
@@ -131,7 +138,9 @@ export const PersonalPortfolio: React.FC<PersonalPortfolioProps> = ({
   // Delete holding
   const handleDelete = (id: string) => {
     if (confirm(isTamil ? 'இந்த பங்கை போர்ட்ஃபோலியோவிலிருந்து நீக்க விரும்புகிறீர்களா?' : 'Delete this holding from portfolio?')) {
-      onUpdatePortfolio(portfolio.filter(p => p.id !== id));
+      if (onUpdatePortfolio) {
+        onUpdatePortfolio(safePortfolio.filter(p => p.id !== id));
+      }
     }
   };
 
@@ -474,7 +483,7 @@ export const PersonalPortfolio: React.FC<PersonalPortfolioProps> = ({
                         <div className="flex items-center justify-end gap-1.5">
                           {item.stock && (
                             <button
-                              onClick={() => onSelectStockToScan(item.stock!)}
+                              onClick={() => handleStockSelect(item.stock!)}
                               className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded transition-colors cursor-pointer"
                               title={t.deepScan}
                             >
@@ -539,8 +548,8 @@ export const PersonalPortfolio: React.FC<PersonalPortfolioProps> = ({
                   <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 text-xs">
                     {item.stock ? (
                       <button
-                        onClick={() => onSelectStockToScan(item.stock!)}
-                        className="text-emerald-600 font-bold text-xs flex items-center gap-1 hover:underline"
+                        onClick={() => handleStockSelect(item.stock!)}
+                        className="text-emerald-600 font-bold text-xs flex items-center gap-1 hover:underline cursor-pointer"
                       >
                         <span>{t.deepScan}</span>
                         <ChevronRight className="w-3.5 h-3.5" />
